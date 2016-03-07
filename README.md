@@ -24,5 +24,8 @@ Show the tracking results when the mouth is open.
 Modified by Brian Zhang to include HD Face Tracking data. Implemented referencing the sources below
 
 Useful links:
+
 <a href="https://github.com/Vangos/kinect-2-face-hd/blob/master/Kinect2FaceHD/Kinect2FaceHD_NET/MainWindow.xaml.cs"> HD Face Tracking </a>
+
+
 <a href="http://pterneas.com/2015/06/06/kinect-hd-face/"> Tutorial </a>
