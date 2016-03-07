@@ -450,7 +450,10 @@ namespace Kv2TongueTracking
                     _tongueX = (getX(mouthClosestDetphIndex) - mouthLeft) / (float)mouthWidth;
                     _tongueY = (getY(mouthClosestDetphIndex) - mouthTop) / (float)mouthHeight;
 
-                    this.Title = _tongueX.ToString("f2") + ", " + _tongueY.ToString("f2");
+                    //this.Title = _tongueX.ToString("f2") + ", " + _tongueY.ToString("f2");
+
+                    //Assuming using all the variables correctly, i.e. frameData returns depth at an index, this should detect tongue sticking out of a person's mouth
+                    this.Title = "Tongue out: " + mouthClosestDepth < frameData[_tongueX*depthFrameDescription.Height + _tongueY];
 
                     if (_tongueX < 0.3)
                     {
