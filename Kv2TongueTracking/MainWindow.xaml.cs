@@ -203,10 +203,28 @@ namespace Kv2TongueTracking
                 return this.depthBitmap;
             }
         }
+
+        //added in for testing HDFaceFrame Stuff
+
+        private BodyFrameSource bodyFrameSource = null; //bodyframereader already initialized previously
+        private FaceAlignment faceAlignment = null;
+        private FaceModel faceModel = null;
+        private List<Ellipse> points = new List<Ellipse>();
+
+        /// <summary>
+        /// Description of the data contained in the depth frame
+        /// </summary>
+        private HighDefinitionFaceFrameSource faceFrameSourceHD = null; //added by @brian zhang
+
+        /// <summary>
+        /// Reader for hd face frames
+        /// </summary>
+        private HighDefinitionFaceFrameReader faceFrameReaderHD = null; //added in to project
+
+
+
         #endregion
-
-
-
+        
 
 
         /// <summary>
@@ -216,8 +234,7 @@ namespace Kv2TongueTracking
         {
             // one sensor is currently supported
             this.kinectSensor = KinectSensor.GetDefault();
-
-            this.bodies = new Body[this.kinectSensor.BodyFrameSource.BodyCount];
+            this.bodies = new Body[this.kinectSensor.BodyFrameSource.BodyCount]; // this can track multiple bodies??
 
             // get the coordinate mapper
             this.coordinateMapper = this.kinectSensor.CoordinateMapper;
@@ -231,11 +248,12 @@ namespace Kv2TongueTracking
                 | FaceFrameFeatures.PointsInInfraredSpace
                 | FaceFrameFeatures.RotationOrientation
                 | FaceFrameFeatures.MouthOpen;
-
+       
             // create a face frame source + reader to track each face in the FOV
             this.faceFrameSource = new FaceFrameSource(this.kinectSensor, 0, faceFrameFeatures);
             this.faceFrameReader = this.faceFrameSource.OpenReader();
             //faceFrameResult = new FaceFrameResult();
+            
 
             #region Depth
             // open the reader for the depth frames
@@ -254,6 +272,7 @@ namespace Kv2TongueTracking
             this.depthBitmap = new WriteableBitmap(this.depthFrameDescription.Width, this.depthFrameDescription.Height, 96.0, 96.0, PixelFormats.Gray8, null);
             #endregion
 
+
             // open the reader for the body frames
             this.bodyFrameReader = this.kinectSensor.BodyFrameSource.OpenReader();
 
@@ -262,6 +281,13 @@ namespace Kv2TongueTracking
 
             // set IsAvailableChanged event notifier
             this.kinectSensor.IsAvailableChanged += this.Sensor_IsAvailableChanged;
+
+
+            this.bodyFrameSource = kinectSensor.BodyFrameSource;
+            //faceFrameHD
+            this.faceFrameSourceHD = new HighDefinitionFaceFrameSource(this.kinectSensor);
+            this.faceFrameReaderHD = this.faceFrameSourceHD.OpenReader();
+            this.faceFrameReaderHD.FrameArrived += FaceReaderHD_FrameArrived;
 
             // open the sensor
             this.kinectSensor.Open();
@@ -322,6 +348,17 @@ namespace Kv2TongueTracking
                     }
                 }
             }
+        }
+
+        private void FaceReaderHD_FrameArrived(object sender, HighDefinitionFaceFrameArrivedEventArgs e)
+        {
+            using (var frame = e.FrameReference.AcquireFrame())
+            {
+                if (frame != null && frame.IsFaceTracked)
+                {
+                    frame.GetAndRefreshFaceAlignmentResult(faceAlignment);
+                }
+            }   
         }
 
         /// <summary>
@@ -417,6 +454,7 @@ namespace Kv2TongueTracking
             mouthClosestDetphIndex = -1;
             ushort mouthtopdepth;
             int mouthtopdepthidx;
+
             // convert depth to a visual representation
             for (int depthIndex = 0; depthIndex < (int)(depthFrameDataSize / this.depthFrameDescription.BytesPerPixel); ++depthIndex)
             {
@@ -447,11 +485,20 @@ namespace Kv2TongueTracking
             if (mouthClosestDetphIndex != -1)
             {
 
-                mouthtopdepthidx = getDepthIndex(mouthTopX, mouthTop - 2);
+                //mouthtopdepthidx = getDepthIndex(mouthTopX, mouthTop - 2);
+
+                mouthtopdepthidx = getDepthIndex( (int) mouthCornerLeft.X, (int) mouthCornerLeft.Y);  //using mouth left corner information
+                
+                int mouthrightdepthidx = getDepthIndex((int) mouthCornerRight.X, (int) mouthCornerRight.Y );
+                ushort mouthrightdepth = frameData[mouthrightdepthidx];
+
+
                 mouthtopdepth = frameData[mouthtopdepthidx];
+                mouthtopdepth += frameData[mouthrightdepthidx];
+                mouthtopdepth /= 2;
 
                 // draws the reference location as a white pixel
-                this.depthPixels[mouthtopdepthidx] = (byte)255;
+                this.depthPixels[mouthtopdepthidx] = (byte) 255;
 
                 //this if statement probably doesnt matter
                 if (!isMouthOpen)
@@ -474,16 +521,17 @@ namespace Kv2TongueTracking
 
                     showInfoTimeCount = 0;
 
-                    _tongueX = (getX(mouthClosestDetphIndex) - mouthLeft) / (float)mouthWidth; //mouth closest depth index should be the depth.
-                    _tongueY = (getY(mouthClosestDetphIndex) - mouthTop) / (float)mouthHeight;
+                    _tongueX = (getX (mouthClosestDetphIndex) - mouthLeft) / (float) mouthWidth; //mouth closest depth index should be the depth.
+                    _tongueY = (getY (mouthClosestDetphIndex) - mouthTop) / (float) mouthHeight;
 
 
 
                     // mouthtopdepth = frameData[getDepthIndex(mouthTopX, mouthTop-10)];
+                    int threshold = -10; //10 is set because it seems to work
 
                     if (mouthClosestDepth != 0)
                     {
-                        bool tongue_sticking_out = (mouthClosestDepth < mouthtopdepth - 10); //10 is set because it seems to work
+                        bool tongue_sticking_out = (mouthClosestDepth < (mouthtopdepth - threshold));
 
                         //_direction displays T or F on the dipslayed images
                         if (tongue_sticking_out)
