@@ -1,0 +1,17 @@
+C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\bin\Release\Kv2TongueTracking.exe.config
+C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\bin\Release\Kv2TongueTracking.exe
+C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\bin\Release\Kv2TongueTracking.pdb
+C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\bin\Release\Microsoft.Kinect.dll
+C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\bin\Release\Microsoft.Kinect.Face.dll
+C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\bin\Release\Microsoft.Kinect.xml
+C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\bin\Release\Microsoft.Kinect.Face.xml
+C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\obj\Release\Kv2TongueTracking.csprojResolveAssemblyReference.cache
+C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\obj\Release\MainWindow.baml
+C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\obj\Release\MainWindow.g.cs
+C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\obj\Release\App.g.cs
+C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\obj\Release\Kv2TongueTracking_MarkupCompile.cache
+C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\obj\Release\Kv2TongueTracking.g.resources
+C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\obj\Release\Kv2TongueTracking.Properties.Resources.resources
+C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\obj\Release\Kv2TongueTracking.csproj.GenerateResource.Cache
+C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\obj\Release\Kv2TongueTracking.exe
+C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\obj\Release\Kv2TongueTracking.pdb

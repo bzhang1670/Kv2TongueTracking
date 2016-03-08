@@ -1,4 +1,5 @@
-﻿using System;
+﻿//Brian Zhang Version
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -124,6 +125,10 @@ namespace Kv2TongueTracking
         /// The Y-axis of mouth's top
         /// </summary>
         private int mouthTop = 0;
+        /// <summary>
+        /// The X-axis of mouth's top
+        /// </summary>
+        private int mouthTopX = 0;
         /// <summary>
         /// Mouth's width
         /// </summary>
@@ -337,13 +342,17 @@ namespace Kv2TongueTracking
                     {
                         isMouthOpen = (faceFrameResult.FaceProperties[FaceProperty.MouthOpen] == (DetectionResult.Yes | DetectionResult.Maybe));
                         //isMouthOpen = (faceFrameResult.FaceProperties[FaceProperty.MouthOpen] != DetectionResult.No);
+
                         mouthCornerLeft = faceFrameResult.FacePointsInInfraredSpace[FacePointType.MouthCornerLeft];
                         mouthCornerRight = faceFrameResult.FacePointsInInfraredSpace[FacePointType.MouthCornerRight];
+
                         mouthCenterY = (int)((mouthCornerLeft.Y + mouthCornerRight.Y) / 2f);
                         mouthLeft = (int)mouthCornerLeft.X;
                         mouthWidth = (int)(mouthCornerRight.X - mouthCornerLeft.X);
-                        mouthHeight = mouthWidth / 2;
-                        mouthTop = mouthCenterY - mouthHeight / 2;
+                        mouthHeight = mouthWidth / 2;                                // he estimated this
+                        mouthTop = mouthCenterY - mouthHeight / 2; //Y
+                        mouthTopX = mouthLeft + (mouthWidth / 2);
+
                     }
 
                 }
@@ -373,6 +382,7 @@ namespace Kv2TongueTracking
 
                             // If you wish to filter by reliable depth distance, uncomment the following line:
                             //// maxDepth = depthFrame.DepthMaxReliableDistance
+
 
                             this.ProcessDepthFrameData(depthBuffer.UnderlyingBuffer, depthBuffer.Size, depthFrame.DepthMinReliableDistance, maxDepth);
                             depthFrameProcessed = true;
@@ -405,13 +415,15 @@ namespace Kv2TongueTracking
 
             mouthClosestDepth = 10000;
             mouthClosestDetphIndex = -1;
-
+            ushort mouthtopdepth;
+            int mouthtopdepthidx;
             // convert depth to a visual representation
             for (int depthIndex = 0; depthIndex < (int)(depthFrameDataSize / this.depthFrameDescription.BytesPerPixel); ++depthIndex)
             {
                 // Get the depth for this pixel
                 ushort depth = frameData[depthIndex];
-                //if (inOnePoint(i, (int)mouthCornerLeft.X, (int)mouthCornerLeft.Y))
+
+                //if (inOnePoint(i, (int) mouthCornerLeft.X, (int) mouthCornerLeft.Y))
                 if (inArea(depthIndex, mouthLeft, mouthTop, mouthWidth, mouthHeight))
                 {
                     // Will be drawn as a white pixel
@@ -430,15 +442,30 @@ namespace Kv2TongueTracking
                 }
             }
 
+            isMouthOpen = true; // set whether or not we want mouth opened to be detected here.
+
             if (mouthClosestDetphIndex != -1)
             {
+
+                mouthtopdepthidx = getDepthIndex(mouthTopX, mouthTop - 2);
+                mouthtopdepth = frameData[mouthtopdepthidx];
+
+                // draws the reference location as a white pixel
+                this.depthPixels[mouthtopdepthidx] = (byte)255;
+
+                //this if statement probably doesnt matter
+                if (!isMouthOpen)
+                {
+                    mouthClosestDepth = 10000;
+                    //this.Title = "Is Tongue closer?: " + (mouthClosestDepth < mouthtopdepth - 15) + "mouthClosestDepth: " + mouthClosestDepth + ", mouthtopdepth: " + mouthtopdepth; // This will (reliably) always be either the tongue or upper lip
+                }
 
                 if (isMouthOpen)
                 {
                     mouthClosedTimeCount = 0;
 
                     // Will be drawn as a black pixel
-                    this.depthPixels[mouthClosestDetphIndex] = (byte)0;
+                    this.depthPixels[mouthClosestDetphIndex] = (byte) 0;
 
                     if (++showInfoTimeCount <= REQUIRED_UPDATE_INFO_FRAME)
                     {
@@ -447,64 +474,100 @@ namespace Kv2TongueTracking
 
                     showInfoTimeCount = 0;
 
-                    _tongueX = (getX(mouthClosestDetphIndex) - mouthLeft) / (float)mouthWidth;
+                    _tongueX = (getX(mouthClosestDetphIndex) - mouthLeft) / (float)mouthWidth; //mouth closest depth index should be the depth.
                     _tongueY = (getY(mouthClosestDetphIndex) - mouthTop) / (float)mouthHeight;
 
+
+
+                    // mouthtopdepth = frameData[getDepthIndex(mouthTopX, mouthTop-10)];
+
+                    if (mouthClosestDepth != 0)
+                    {
+                        bool tongue_sticking_out = (mouthClosestDepth < mouthtopdepth - 10); //10 is set because it seems to work
+
+                        //_direction displays T or F on the dipslayed images
+                        if (tongue_sticking_out)
+                        {
+                            _direction = "T";
+
+                        }
+                        else
+                        {
+                            _direction = "F";
+                        }
+
+                        // this.Title = "Is Tongue closer?: " + (mouthClosestDepth < mouthtopdepth-15) + "mouthClosestDepth: " + mouthClosestDepth  + ", mouthtopdepth: " + mouthtopdepth; // This will (reliably) always be either the tongue or upper lip
+                    }
+
+                    //frameData[getDepthIndex(_tongueX, _tongueY)];
+
+                    /* if (this.kinectSensor != null)
+                     {
+                         // on failure, set the status text
+                         this.Title = "Kv2 Tongue Detector - " + (this.kinectSensor.IsAvailable ? "Running" : "Sensor Not Available") + ", mouthClosestDepthIndex: " + mouthClosestDetphIndex;
+                     }*/
+                    /*
+                     *  @mouthClosestDetphIndex is calculated to be the mouth index. 
+                     *  Now we need a way to get the lip depth
+                     *  There is something called MouthUpperlipMidtop in HighDetailFacePoints (C++ Only)
+                     */
+
                     //this.Title = _tongueX.ToString("f2") + ", " + _tongueY.ToString("f2");
+                    //this.Title = "mouthClosestDepthIndex: " + mouthClosestDetphIndex;
 
-                    //Assuming using all the variables correctly, i.e. frameData returns depth at an index, this should detect tongue sticking out of a person's mouth
-                    this.Title = "Tongue out: " + mouthClosestDepth < frameData[_tongueX*depthFrameDescription.Height + _tongueY];
 
-                    if (_tongueX < 0.3)
-                    {
-                        if (_tongueY < 0.3)
-                        {
-                            _direction = "↖";
-                        }
-                        else if (_tongueY < 0.6)
-                        {
-                            _direction = "←";
-                        }
-                        else
-                        {
-                            _direction = "↙";
-                        }
-                    }
-                    else if (_tongueX < 0.6)
-                    {
-                        if (_tongueY < 0.3)
-                        {
-                            _direction = "↑";
-                        }
-                        else if (_tongueY < 0.6)
-                        {
-                            _direction = "o";
-                        }
-                        else
-                        {
-                            _direction = "↓";
-                        }
-                    }
-                    else
-                    {
-                        if (_tongueY < 0.3)
-                        {
-                            _direction = "↗";
-                        }
-                        else if (_tongueY < 0.6)
-                        {
-                            _direction = "→";
-                        }
-                        else
-                        {
-                            _direction = "↘";
-                        }
-                    }
+                    //if (_tongueX < 0.3)
+                    //{
+                    //    if (_tongueY < 0.3)
+                    //    {
+                    //        _direction = "↖";
+                    //    }
+                    //    else if (_tongueY < 0.6)
+                    //    {
+                    //        _direction = "←";
+                    //    }
+                    //    else
+                    //    {
+                    //        _direction = "↙";
+                    //    }
+                    //}
+                    //else if (_tongueX < 0.6)
+                    //{
+                    //    if (_tongueY < 0.3)
+                    //    {
+                    //        _direction = "↑";
+                    //    }
+                    //    else if (_tongueY < 0.6)
+                    //    {
+                    //        _direction = "o";
+                    //    }
+                    //    else
+                    //    {
+                    //        _direction = "↓";
+                    //    }
+                    //}
+                    //else
+                    //{
+                    //    if (_tongueY < 0.3)
+                    //    {
+                    //        _direction = "↗";
+                    //    }
+                    //    else if (_tongueY < 0.6)
+                    //    {
+                    //        _direction = "→";
+                    //    }
+                    //    else
+                    //    {
+                    //        _direction = "↘";
+                    //    }
+                    //}
                 }
                 #region Uncomment this region if you want it to show an "X" when mouth is not open.
                 else if (++mouthClosedTimeCount >= REQUIRED_MOUTH_CLOSED_FRAME)
                 {
-                    _direction = "X";
+                    // _direction = "X";
+
+                    _direction = "F";
                 }
                 #endregion
 
@@ -527,7 +590,6 @@ namespace Kv2TongueTracking
 
             image.Source = depthBitmap;
         }
-
 
         /// <summary>
         /// Handles the event which the sensor becomes unavailable (E.g. paused, closed, unplugged).
@@ -635,6 +697,12 @@ namespace Kv2TongueTracking
         public int getY(int depthIndex)
         {
             return (depthIndex + 1) / depthFrameDescription.Width;
+        }
+
+        public int getDepthIndex(int X, int Y)
+        {
+
+            return Y * depthFrameDescription.Width + X;
         }
 
     }
