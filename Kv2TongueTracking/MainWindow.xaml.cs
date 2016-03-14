@@ -204,7 +204,12 @@ namespace Kv2TongueTracking
             }
         }
 
-        //added in for testing HDFaceFrame Stuff
+        /*
+         *
+         * added in for testing HDFaceFrame Stuff
+         * 
+         */
+        private DepthSpacePoint MouthUpperlipPoint;
 
         private BodyFrameSource bodyFrameSource = null; //bodyframereader already initialized previously
         private FaceAlignment faceAlignment = null;
@@ -221,11 +226,7 @@ namespace Kv2TongueTracking
         /// </summary>
         private HighDefinitionFaceFrameReader faceFrameReaderHD = null; //added in to project
 
-
-
         #endregion
-        
-
 
         /// <summary>
         /// Initializes a new instance of the MainWindow class.
@@ -284,7 +285,8 @@ namespace Kv2TongueTracking
 
 
             this.bodyFrameSource = kinectSensor.BodyFrameSource;
-            //faceFrameHD
+
+            //faceFrameHD (brian zhang)
             this.faceFrameSourceHD = new HighDefinitionFaceFrameSource(this.kinectSensor);
             this.faceFrameReaderHD = this.faceFrameSourceHD.OpenReader();
             this.faceFrameReaderHD.FrameArrived += FaceReaderHD_FrameArrived;
@@ -357,8 +359,56 @@ namespace Kv2TongueTracking
                 if (frame != null && frame.IsFaceTracked)
                 {
                     frame.GetAndRefreshFaceAlignmentResult(faceAlignment);
+                    UpdateFacePoints();
                 }
             }   
+        }
+
+        private void UpdateFacePoints()
+        {
+            if (faceModel == null) return;
+
+            var vertices = faceModel.CalculateVerticesForAlignment(faceAlignment);
+
+            if (vertices.Count > 0)
+            {
+                if (points.Count == 0)
+                {
+                    for (int index = 0; index < vertices.Count; index++)
+                    {
+                        Ellipse ellipse = new Ellipse
+                        {
+                            Width = 2.0,
+                            Height = 2.0,
+                            Fill = new SolidColorBrush(Colors.Blue)
+                        };
+
+                        points.Add(ellipse);
+                    }
+
+                    //we don't need to actually draw all the points
+                    /*foreach (Ellipse ellipse in points)
+                    {
+                        canvas.Children.Add(ellipse);
+                    }*/
+                }
+
+                CameraSpacePoint MouthUpperlipMidtopVertex = vertices[19];
+                MouthUpperlipPoint = kinectSensor.CoordinateMapper.MapCameraPointToDepthSpace(MouthUpperlipMidtopVertex);
+
+                /*for (int index = 0; index < vertices.Count; index++)
+                {
+                    CameraSpacePoint vertice = vertices[index];
+                    DepthSpacePoint point = kinectSensor.CoordinateMapper.MapCameraPointToDepthSpace(vertice);
+
+                    if (float.IsInfinity(point.X) || float.IsInfinity(point.Y)) return;
+
+                    Ellipse ellipse = points[index];
+
+                    //Canvas.SetLeft(ellipse, point.X);
+                    //Canvas.SetTop(ellipse, point.Y);
+                }*/
+            }
         }
 
         /// <summary>
@@ -465,7 +515,7 @@ namespace Kv2TongueTracking
                 if (inArea(depthIndex, mouthLeft, mouthTop, mouthWidth, mouthHeight))
                 {
                     // Will be drawn as a white pixel
-                    this.depthPixels[depthIndex] = (byte)255;
+                    this.depthPixels[depthIndex] = (byte) 255;
                     if (depth < mouthClosestDepth)
                     {
                         mouthClosestDepth = depth;
@@ -486,17 +536,17 @@ namespace Kv2TongueTracking
             {
 
                 //mouthtopdepthidx = getDepthIndex(mouthTopX, mouthTop - 2);
+                //old stuff
 
-                mouthtopdepthidx = getDepthIndex( (int) mouthCornerLeft.X, (int) mouthCornerLeft.Y);  //using mouth left corner information
-                
-                int mouthrightdepthidx = getDepthIndex((int) mouthCornerRight.X, (int) mouthCornerRight.Y );
+                //mouthtopdepthidx = getDepthIndex( (int) mouthCornerLeft.X, (int) mouthCornerLeft.Y);  //using mouth left corner information
+                /*int mouthrightdepthidx = getDepthIndex((int) mouthCornerRight.X, (int) mouthCornerRight.Y );
                 ushort mouthrightdepth = frameData[mouthrightdepthidx];
-
-
                 mouthtopdepth = frameData[mouthtopdepthidx];
-                mouthtopdepth += frameData[mouthrightdepthidx];
-                mouthtopdepth /= 2;
+                */
 
+                //with HDFrameData
+                mouthtopdepthidx = getDepthIndex((int)MouthUpperlipPoint.X, (int)MouthUpperlipPoint.Y);
+                mouthtopdepth = frameData[mouthtopdepthidx];
                 // draws the reference location as a white pixel
                 this.depthPixels[mouthtopdepthidx] = (byte) 255;
 
@@ -507,7 +557,8 @@ namespace Kv2TongueTracking
                     //this.Title = "Is Tongue closer?: " + (mouthClosestDepth < mouthtopdepth - 15) + "mouthClosestDepth: " + mouthClosestDepth + ", mouthtopdepth: " + mouthtopdepth; // This will (reliably) always be either the tongue or upper lip
                 }
 
-                if (isMouthOpen)
+                //if (isMouthOpen)
+                if(true) // for testing
                 {
                     mouthClosedTimeCount = 0;
 
@@ -520,14 +571,11 @@ namespace Kv2TongueTracking
                     }
 
                     showInfoTimeCount = 0;
-
                     _tongueX = (getX (mouthClosestDetphIndex) - mouthLeft) / (float) mouthWidth; //mouth closest depth index should be the depth.
                     _tongueY = (getY (mouthClosestDetphIndex) - mouthTop) / (float) mouthHeight;
 
-
-
                     // mouthtopdepth = frameData[getDepthIndex(mouthTopX, mouthTop-10)];
-                    int threshold = -10; //10 is set because it seems to work
+                    int threshold = -10; //-10 is set because it seems to work
 
                     if (mouthClosestDepth != 0)
                     {
@@ -554,62 +602,62 @@ namespace Kv2TongueTracking
                          // on failure, set the status text
                          this.Title = "Kv2 Tongue Detector - " + (this.kinectSensor.IsAvailable ? "Running" : "Sensor Not Available") + ", mouthClosestDepthIndex: " + mouthClosestDetphIndex;
                      }*/
-                    /*
-                     *  @mouthClosestDetphIndex is calculated to be the mouth index. 
-                     *  Now we need a way to get the lip depth
-                     *  There is something called MouthUpperlipMidtop in HighDetailFacePoints (C++ Only)
-                     */
+        /*
+         *  @mouthClosestDetphIndex is calculated to be the mouth index. 
+         *  Now we need a way to get the lip depth
+         *  There is something called MouthUpperlipMidtop in HighDetailFacePoints (C++ Only)
+         */
 
-                    //this.Title = _tongueX.ToString("f2") + ", " + _tongueY.ToString("f2");
-                    //this.Title = "mouthClosestDepthIndex: " + mouthClosestDetphIndex;
+        //this.Title = _tongueX.ToString("f2") + ", " + _tongueY.ToString("f2");
+        //this.Title = "mouthClosestDepthIndex: " + mouthClosestDetphIndex;
 
 
-                    //if (_tongueX < 0.3)
-                    //{
-                    //    if (_tongueY < 0.3)
-                    //    {
-                    //        _direction = "↖";
-                    //    }
-                    //    else if (_tongueY < 0.6)
-                    //    {
-                    //        _direction = "←";
-                    //    }
-                    //    else
-                    //    {
-                    //        _direction = "↙";
-                    //    }
-                    //}
-                    //else if (_tongueX < 0.6)
-                    //{
-                    //    if (_tongueY < 0.3)
-                    //    {
-                    //        _direction = "↑";
-                    //    }
-                    //    else if (_tongueY < 0.6)
-                    //    {
-                    //        _direction = "o";
-                    //    }
-                    //    else
-                    //    {
-                    //        _direction = "↓";
-                    //    }
-                    //}
-                    //else
-                    //{
-                    //    if (_tongueY < 0.3)
-                    //    {
-                    //        _direction = "↗";
-                    //    }
-                    //    else if (_tongueY < 0.6)
-                    //    {
-                    //        _direction = "→";
-                    //    }
-                    //    else
-                    //    {
-                    //        _direction = "↘";
-                    //    }
-                    //}
-                }
+        //if (_tongueX < 0.3)
+        //{
+        //    if (_tongueY < 0.3)
+        //    {
+        //        _direction = "↖";
+        //    }
+        //    else if (_tongueY < 0.6)
+        //    {
+        //        _direction = "←";
+        //    }
+        //    else
+        //    {
+        //        _direction = "↙";
+        //    }
+        //}
+        //else if (_tongueX < 0.6)
+        //{
+        //    if (_tongueY < 0.3)
+        //    {
+        //        _direction = "↑";
+        //    }
+        //    else if (_tongueY < 0.6)
+        //    {
+        //        _direction = "o";
+        //    }
+        //    else
+        //    {
+        //        _direction = "↓";
+        //    }
+        //}
+        //else
+        //{
+        //    if (_tongueY < 0.3)
+        //    {
+        //        _direction = "↗";
+        //    }
+        //    else if (_tongueY < 0.6)
+        //    {
+        //        _direction = "→";
+        //    }
+        //    else
+        //    {
+        //        _direction = "↘";
+        //    }
+        //}
+    }
                 #region Uncomment this region if you want it to show an "X" when mouth is not open.
                 else if (++mouthClosedTimeCount >= REQUIRED_MOUTH_CLOSED_FRAME)
                 {

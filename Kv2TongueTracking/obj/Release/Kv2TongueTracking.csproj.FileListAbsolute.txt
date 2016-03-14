@@ -15,3 +15,6 @@ C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\K
 C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\obj\Release\Kv2TongueTracking.csproj.GenerateResource.Cache
 C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\obj\Release\Kv2TongueTracking.exe
 C:\Users\Michael Tsang\Workspace\BrianZhangKv2TongueTracking\Kv2TongueTracking\Kv2TongueTracking\obj\Release\Kv2TongueTracking.pdb
+C:\Users\Brian\Desktop\Kv2TongueTracking\Kv2TongueTracking\bin\Release\Kv2TongueTracking.exe.config
+C:\Users\Brian\Desktop\Kv2TongueTracking\Kv2TongueTracking\obj\Release\Kv2TongueTracking.exe
+C:\Users\Brian\Desktop\Kv2TongueTracking\Kv2TongueTracking\obj\Release\Kv2TongueTracking.pdb
